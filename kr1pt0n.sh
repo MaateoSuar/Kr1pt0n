@@ -332,7 +332,14 @@ run_direct_module() {
   fi
 
   log_message "INFO" "Running direct module: $module_name"
-  bash "$module_path"
+  unset -f run_module 2>/dev/null || true
+  source "$module_path"
+  if ! declare -F run_module >/dev/null 2>&1; then
+    print_error "Module entrypoint run_module() not found: $module_name"
+    log_message "ERROR" "Module entrypoint run_module() not found: $module_name"
+    return 1
+  fi
+  run_module
 }
 
 show_learning_mode() {
@@ -446,7 +453,15 @@ run_module() {
   fi
 
   log_message "INFO" "Running module: $module_name"
-  if ! bash "$module_path"; then
+  unset -f run_module 2>/dev/null || true
+  source "$module_path"
+  if ! declare -F run_module >/dev/null 2>&1; then
+    print_error "Module entrypoint run_module() not found: $module_name"
+    log_message "ERROR" "Module entrypoint run_module() not found: $module_name"
+    read -r -p "$PROMPT_CONTINUE" _
+    return
+  fi
+  if ! run_module; then
     print_error "$MODULE_EXEC_FAILED $module_name"
     log_message "ERROR" "Module execution failed: $module_name"
   fi

@@ -5,9 +5,22 @@ UTILS_DIR="$BASE_DIR/utils"
 LOG_DIR="$BASE_DIR/logs"
 REPORTS_DIR="$BASE_DIR/reports"
 LANG_DIR="$BASE_DIR/lang"
+CORE_DIR="$BASE_DIR/core"
 
 if [[ -f "$UTILS_DIR/colors.sh" ]]; then
   source "$UTILS_DIR/colors.sh"
+fi
+
+if [[ -f "$CORE_DIR/findings.sh" ]]; then
+  source "$CORE_DIR/findings.sh"
+fi
+
+if [[ -f "$CORE_DIR/output.sh" ]]; then
+  source "$CORE_DIR/output.sh"
+fi
+
+if [[ -f "$CORE_DIR/report.sh" ]]; then
+  source "$CORE_DIR/report.sh"
 fi
 
 RED="${RED:-}"
@@ -109,36 +122,14 @@ append_report() {
 register_module() {
   local module_name="$1"
   ensure_runtime
-  if ! grep -Fxq "$module_name" "$KR1PT0N_MODULES_FILE" 2>/dev/null; then
-    printf '%s\n' "$module_name" >> "$KR1PT0N_MODULES_FILE"
-  fi
+  register_module_run "$module_name"
 }
 
 register_finding() {
   local severity="$1"
   local message="$2"
   ensure_runtime
-
-  case "$severity" in
-    HIGH)
-      KR1PT0N_HIGH_COUNT=$((KR1PT0N_HIGH_COUNT + 1))
-      ;;
-    MEDIUM)
-      KR1PT0N_MEDIUM_COUNT=$((KR1PT0N_MEDIUM_COUNT + 1))
-      ;;
-    LOW)
-      KR1PT0N_LOW_COUNT=$((KR1PT0N_LOW_COUNT + 1))
-      ;;
-    *)
-      severity="INFO"
-      ;;
-  esac
-
-  export KR1PT0N_HIGH_COUNT
-  export KR1PT0N_MEDIUM_COUNT
-  export KR1PT0N_LOW_COUNT
-
-  printf '%s|%s\n' "$severity" "$message" >> "$KR1PT0N_FINDINGS_FILE"
+  add_finding "$severity" "$message"
 }
 
 json_escape() {
@@ -167,36 +158,7 @@ risk_summary_text() {
 
 generate_markdown_report() {
   ensure_runtime
-
-  {
-    echo "# Kr1pt0n Scan Report"
-    echo
-    echo "## Session"
-    echo "- User: $(whoami 2>/dev/null || echo unknown)"
-    echo "- Hostname: $(hostname 2>/dev/null || echo unknown)"
-    echo "- Date: $(current_date_human)"
-    echo
-    echo "## Modules Executed"
-    if [[ -s "$KR1PT0N_MODULES_FILE" ]]; then
-      while IFS= read -r module_name; do
-        [[ -n "$module_name" ]] && echo "- $module_name"
-      done < "$KR1PT0N_MODULES_FILE"
-    else
-      echo "- No modules recorded"
-    fi
-    echo
-    echo "## Findings"
-    if [[ -s "$KR1PT0N_FINDINGS_FILE" ]]; then
-      while IFS='|' read -r severity message; do
-        [[ -n "$message" ]] && echo "- [$severity] $message"
-      done < "$KR1PT0N_FINDINGS_FILE"
-    else
-      echo "- No findings recorded"
-    fi
-    echo
-    echo "## Risk Summary"
-    echo "- $(risk_summary_text)"
-  } > "$KR1PT0N_MARKDOWN_REPORT"
+  generate_report
 }
 
 generate_json_report() {
@@ -244,49 +206,8 @@ generate_json_report() {
   } > "$KR1PT0N_JSON_REPORT"
 }
 
-print_header() {
-  local title="$1"
-  echo
-  echo -e "${CYAN}${BOLD}== ${title} ==${RESET}"
-}
-
-print_info() {
-  local message="$1"
-  echo -e "${GREEN}[+]${RESET} ${message}"
-}
-
-print_warning() {
-  local message="$1"
-  echo -e "${YELLOW}[!]${RESET} ${message}"
-}
-
-print_error() {
-  local message="$1"
-  echo -e "${RED}[-]${RESET} ${message}"
-}
-
 quick_enabled() {
   [[ "${KR1PT0N_QUICK:-0}" -eq 1 ]]
-}
-
-print_step() {
-  local message="$1"
-  echo -e "${BLUE}[>]${RESET} ${message}"
-  log_message "STEP" "$message"
-}
-
-print_value_block() {
-  local label="$1"
-  local value="$2"
-
-  print_info "$label"
-  if [[ -n "$value" ]]; then
-    while IFS= read -r line; do
-      echo "    $line"
-    done <<< "$value"
-  else
-    echo "    No data found."
-  fi
 }
 
 show_log_location() {

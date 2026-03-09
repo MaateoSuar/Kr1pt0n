@@ -16,12 +16,21 @@ run_safe_module() {
   local script_name="$1"
   local friendly_name="$2"
   local failure_message="$3"
+  local module_path="$MODULES_DIR/$script_name"
 
   if ! quick_enabled; then
     print_step "$friendly_name"
   fi
 
-  if ! bash "$MODULES_DIR/$script_name"; then
+  unset -f run_module 2>/dev/null || true
+  source "$module_path"
+  if ! declare -F run_module >/dev/null 2>&1; then
+    print_error "$failure_message"
+    append_report "ERROR" "$failure_message"
+    return
+  fi
+
+  if ! run_module; then
     print_error "$failure_message"
     append_report "ERROR" "$failure_message"
   fi
@@ -46,4 +55,6 @@ main() {
   append_report "INFO" "$TXT_AUTO_REPORT"
 }
 
-main
+run_module() {
+  main
+}

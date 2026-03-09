@@ -17,7 +17,7 @@ report_path_list() {
 
   while IFS= read -r path_entry; do
     [[ -z "$path_entry" ]] && continue
-    print_warning "$title: $path_entry"
+    print_finding "$title: $path_entry"
     append_report "WARNING" "$title: $path_entry"
     register_finding "$severity" "$title: $path_entry"
   done <<< "$path_list"
@@ -25,6 +25,7 @@ report_path_list() {
 
 main() {
   local world_writable_files world_writable_dirs root_owned_writable suspicious_scripts
+  local scan_paths=(/etc /usr /opt /home /var)
 
   ensure_runtime
   register_module "perms"
@@ -37,25 +38,25 @@ main() {
   if ! quick_enabled; then
     print_step "Reviewing world-writable files..."
   fi
-  world_writable_files="$(find / -type f -perm -0002 2>/dev/null | head -n 25)"
+  world_writable_files="$(find "${scan_paths[@]}" -type f -perm -0002 2>/dev/null | head -n 25)"
   [[ -n "$world_writable_files" ]] && report_path_list "HIGH" "World writable file" "$world_writable_files"
 
   if ! quick_enabled; then
     print_step "Reviewing world-writable directories..."
   fi
-  world_writable_dirs="$(find / -type d -perm -0002 2>/dev/null | head -n 25)"
+  world_writable_dirs="$(find "${scan_paths[@]}" -type d -perm -0002 2>/dev/null | head -n 25)"
   [[ -n "$world_writable_dirs" ]] && report_path_list "HIGH" "World writable directory" "$world_writable_dirs"
 
   if ! quick_enabled; then
     print_step "Reviewing writable files owned by root..."
   fi
-  root_owned_writable="$(find / -type f -user root -writable 2>/dev/null | head -n 25)"
+  root_owned_writable="$(find "${scan_paths[@]}" -type f -user root -writable 2>/dev/null | head -n 25)"
   [[ -n "$root_owned_writable" ]] && report_path_list "MEDIUM" "Writable file owned by root" "$root_owned_writable"
 
   if ! quick_enabled; then
     print_step "Reviewing suspicious writable scripts..."
   fi
-  suspicious_scripts="$(find / -type f \( -name '*.sh' -o -name '*.py' -o -name '*.pl' \) -writable 2>/dev/null | head -n 25)"
+  suspicious_scripts="$(find "${scan_paths[@]}" -type f \( -name '*.sh' -o -name '*.py' -o -name '*.pl' \) -writable 2>/dev/null | head -n 25)"
   [[ -n "$suspicious_scripts" ]] && report_path_list "MEDIUM" "Suspicious writable script" "$suspicious_scripts"
 
   if [[ -z "$world_writable_files$world_writable_dirs$root_owned_writable$suspicious_scripts" ]]; then
@@ -65,4 +66,6 @@ main() {
   print_warning "Permission review completed."
 }
 
-main
+run_module() {
+  main
+}

@@ -50,12 +50,12 @@ get_sudo_permissions() {
 }
 
 get_suid_binaries() {
-  find / -perm -4000 -type f 2>/dev/null | sort
+  find /etc /usr /opt /home /var -perm -4000 -type f 2>/dev/null | sort
 }
 
 get_capabilities() {
   if command -v getcap >/dev/null 2>&1; then
-    getcap -r / 2>/dev/null | sort
+    getcap -r /etc /usr /opt /home /var 2>/dev/null | sort
   else
     echo "getcap is not installed."
   fi
@@ -227,4 +227,6 @@ main() {
   print_warning "$TXT_ENUM_DONE"
 }
 
-main
+run_module() {
+  main
+}

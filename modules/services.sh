@@ -42,7 +42,7 @@ main() {
   log_message "INFO" "Listening services review started"
 
   if [[ "$socket_output" == "No supported socket listing tool found." ]]; then
-    print_warning "$socket_output"
+    print_finding "$socket_output"
     append_report "WARNING" "$socket_output"
     register_finding "LOW" "$socket_output"
     return
@@ -57,7 +57,7 @@ main() {
   if [[ -n "$exposed_services" ]]; then
     while IFS= read -r line; do
       [[ -z "$line" ]] && continue
-      print_warning "Potentially sensitive exposed service: $line"
+      print_finding "Potentially sensitive exposed service: $line"
       append_report "WARNING" "Potentially sensitive exposed service: $line"
       register_finding "MEDIUM" "Potentially sensitive exposed service: $line"
     done <<< "$exposed_services"
@@ -68,4 +68,6 @@ main() {
   append_report "INFO" "Services review completed."
 }
 
-main
+run_module() {
+  main
+}

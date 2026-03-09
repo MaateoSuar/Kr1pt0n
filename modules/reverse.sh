@@ -49,4 +49,6 @@ main() {
   append_report "INFO" "$TXT_REVERSE_REPORT ${attacker_ip}:${attacker_port}"
 }
 
-main
+run_module() {
+  main
+}

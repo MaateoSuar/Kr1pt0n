@@ -94,7 +94,7 @@ check_suid() {
     fi
     append_report "WARNING" "$TXT_PRIVESC_SUID_FOUND: $binary_name ($suid_file)"
     register_finding "MEDIUM" "$TXT_PRIVESC_SUID_FOUND: $binary_name ($suid_file)"
-  done < <(find / -perm -4000 -type f 2>/dev/null | sort)
+  done < <(find /etc /usr /opt /home /var -perm -4000 -type f 2>/dev/null | sort)
 
   if [[ "$found_any" -eq 0 ]]; then
     print_finding "$TXT_PRIVESC_NO_SUID" "$TXT_PRIVESC_NO_SUID_WHY" ""
@@ -139,4 +139,6 @@ main() {
   check_writable_path_dirs
 }
 
-main
+run_module() {
+  main
+}

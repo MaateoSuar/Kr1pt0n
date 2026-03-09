@@ -41,4 +41,6 @@ main() {
   append_report "INFO" "$TXT_UPGRADE_REPORT"
 }
 
-main
+run_module() {
+  main
+}

@@ -17,7 +17,7 @@ inspect_cron_script() {
   [[ ! -e "$cron_path" ]] && return
 
   if [[ -w "$cron_path" ]]; then
-    print_warning "Writable cron script detected: $cron_path"
+    print_finding "Writable cron script detected: $cron_path"
     append_report "WARNING" "Writable cron script detected: $cron_path"
     register_finding "HIGH" "Writable cron script detected: $cron_path"
   elif ! quick_enabled; then
@@ -25,7 +25,7 @@ inspect_cron_script() {
   fi
 
   if [[ -d "$cron_path" && -w "$cron_path" ]]; then
-    print_warning "Writable cron directory detected: $cron_path"
+    print_finding "Writable cron directory detected: $cron_path"
     append_report "WARNING" "Writable cron directory detected: $cron_path"
     register_finding "HIGH" "Writable cron directory detected: $cron_path"
   fi
@@ -33,7 +33,7 @@ inspect_cron_script() {
   if [[ -f "$cron_path" ]]; then
     file_owner="$(stat -c '%U' "$cron_path" 2>/dev/null)"
     if [[ "$file_owner" == "root" && -w "$cron_path" ]]; then
-      print_warning "Root-owned writable cron file detected: $cron_path"
+      print_finding "Root-owned writable cron file detected: $cron_path"
       append_report "WARNING" "Root-owned writable cron file detected: $cron_path"
       register_finding "HIGH" "Root-owned writable cron file detected: $cron_path"
     fi
@@ -62,7 +62,7 @@ process_cron_line() {
   fi
 
   if [[ "$user_field" == "root" ]]; then
-    print_warning "Cron job running as root found in $cron_source"
+    print_finding "Cron job running as root found in $cron_source"
     append_report "WARNING" "Cron job running as root found in $cron_source"
     register_finding "MEDIUM" "Cron job running as root found in $cron_source"
   fi
@@ -118,4 +118,6 @@ main() {
   print_warning "Cron review completed."
 }
 
-main
+run_module() {
+  main
+}
